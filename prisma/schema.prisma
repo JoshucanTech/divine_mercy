@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Contestant {
+  id        String   @id @default(cuid())
+  name      String
+  image     String?
+  voteCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([voteCount])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  contestantId  String
+  voterEmail    String
+  voterName     String?
+  amount        Float
+  currency      String   @default("NGN")
+  flutterRef    String?  @unique
+  status        String   @default("pending") // pending, completed, failed
+  voteApplied   Boolean  @default(false)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([flutterRef])
+  @@index([status])
+  @@index([contestantId])
+}
+
+model Settings {
+  id           String  @id @default("singleton")
+  voteCost     Float   @default(100)
+  currency     String  @default("NGN")
+  votingActive Boolean @default(true)
+
+  @@unique([id])
+}
+
+model AdminUser {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
