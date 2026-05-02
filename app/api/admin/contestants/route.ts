@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { mockDb } from '@/lib/mock-db'
+import { prisma } from '@/lib/db'
 import { z } from 'zod'
 
 // Middleware to check auth
-async function requireAuth(request: NextRequest) {
+async function requireAuth() {
   const session = await getServerSession()
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,13 +14,14 @@ async function requireAuth(request: NextRequest) {
 
 const CreateContestantSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  imageUrl: z.string().url().optional(),
+  image: z.string().url().optional().or(z.literal('')),
 })
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const contestants = mockDb.getContestants()
+    const contestants = await prisma.contestant.findMany({
+      orderBy: { voteCount: 'desc' },
+    })
     return NextResponse.json(contestants)
   } catch (error) {
     console.error('Get contestants error:', error)
@@ -32,14 +33,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAuth(request)
+  const authError = await requireAuth()
   if (authError) return authError
 
   try {
     const body = await request.json()
-    const { name, description, imageUrl } = CreateContestantSchema.parse(body)
+    const { name, image } = CreateContestantSchema.parse(body)
 
-    const contestant = mockDb.createContestant(name, description || '', imageUrl)
+    const contestant = await prisma.contestant.create({
+      data: {
+        name,
+        image: image || null,
+        voteCount: 0,
+      },
+    })
 
     return NextResponse.json(contestant, { status: 201 })
   } catch (error) {

@@ -38,6 +38,11 @@ export default function AdminDashboard() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [formData, setFormData] = useState({ name: '', image: '' })
   const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchContestants()
+    }
+  }, [status])
 
   if (status === 'loading') {
     return (
@@ -54,10 +59,6 @@ export default function AdminDashboard() {
     router.push('/admin/login')
     return null
   }
-
-  useEffect(() => {
-    fetchContestants()
-  }, [])
 
   const fetchContestants = async () => {
     try {

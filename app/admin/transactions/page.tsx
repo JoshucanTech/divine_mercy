@@ -28,14 +28,16 @@ export default function AdminTransactions() {
   const [filter, setFilter] = useState('all')
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchTransactions()
+    }
+  }, [status, filter])
+
   if (status === 'unauthenticated') {
     router.push('/admin/login')
     return null
   }
-
-  useEffect(() => {
-    fetchTransactions()
-  }, [filter])
 
   const fetchTransactions = async () => {
     try {

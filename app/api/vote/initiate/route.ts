@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockDb } from '@/lib/mock-db'
+import { prisma } from '@/lib/db'
 import { z } from 'zod'
 
 const VoteRequestSchema = z.object({
@@ -9,56 +9,27 @@ const VoteRequestSchema = z.object({
   voterPhone: z.string().optional(),
 })
 
-// Mock rate limiting (in production, use Upstash Redis)
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(email: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(email) || []
-  const recentRequests = timestamps.filter((t) => now - t < 60000) // 1 minute window
-  
-  if (recentRequests.length >= 5) {
-    return true
-  }
-  
-  rateLimitMap.set(email, [...recentRequests, now])
-  return false
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { contestantId, voterEmail, voterName, voterPhone } = VoteRequestSchema.parse(body)
+    const { contestantId, voterEmail, voterName } = VoteRequestSchema.parse(body)
 
-    // Check rate limit
-    if (isRateLimited(voterEmail)) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      )
-    }
+    // 1. Check voting is active
+    const settings = await prisma.settings.findUnique({
+      where: { id: 'singleton' },
+    })
 
-    // Check voting is active
-    const settings = mockDb.getSettings()
-
-    if (!settings?.isActive) {
+    if (!settings?.votingActive) {
       return NextResponse.json(
         { error: 'Voting is not currently active.' },
         { status: 400 }
       )
     }
 
-    // Check max votes per user
-    const userVoteCount = mockDb.getVoteCount(voterEmail)
-    if (userVoteCount >= settings.maxVotesPerUser) {
-      return NextResponse.json(
-        { error: `You have reached the maximum of ${settings.maxVotesPerUser} votes.` },
-        { status: 400 }
-      )
-    }
-
-    // Verify contestant exists
-    const contestant = mockDb.getContestant(contestantId)
+    // 2. Verify contestant exists
+    const contestant = await prisma.contestant.findUnique({
+      where: { id: contestantId },
+    })
 
     if (!contestant) {
       return NextResponse.json(
@@ -67,24 +38,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create pending transaction
+    // 3. Create pending transaction
     const reference = 'TXN' + Date.now() + Math.random().toString(36).substr(2, 9)
-    const transaction = mockDb.createTransaction(
-      reference,
-      settings.votePrice,
-      contestantId,
-      voterEmail,
-      voterPhone || ''
-    )
+    const transaction = await prisma.transaction.create({
+      data: {
+        contestantId,
+        voterEmail,
+        voterName: voterName || null,
+        amount: settings.voteCost,
+        currency: settings.currency,
+        status: 'pending',
+        flutterRef: reference, // Using reference as flutterRef for now
+      },
+    })
 
-    // In production, initialize Flutterwave payment
-    // For demo, return mock payment data
+    // For demo/development, return a mock payment URL
+    // In production, you would call Flutterwave API here to get a real payment URL
     const mockPaymentUrl = `/vote/payment?reference=${reference}`
 
     return NextResponse.json({
       transactionId: transaction.id,
-      reference: transaction.reference,
-      amount: settings.votePrice,
+      reference: transaction.flutterRef,
+      amount: transaction.amount,
+      currency: transaction.currency,
       paymentUrl: mockPaymentUrl,
     })
   } catch (error) {

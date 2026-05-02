@@ -24,14 +24,16 @@ export default function AdminSettings() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSettings()
+    }
+  }, [status])
+
   if (status === 'unauthenticated') {
     router.push('/admin/login')
     return null
   }
-
-  useEffect(() => {
-    fetchSettings()
-  }, [])
 
   const fetchSettings = async () => {
     try {

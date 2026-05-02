@@ -1,54 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockDb } from '@/lib/mock-db'
-
-// Verify Flutterwave webhook signature
-function verifyWebhookSignature(payload: string, signature: string): boolean {
-  // In production, use actual Flutterwave secret
-  // For now, skip verification for mock testing
-  return true
-}
+import { prisma } from '@/lib/db'
+import { broadcastUpdate } from '../../leaderboard/stream/route'
 
 export async function POST(request: NextRequest) {
   try {
-    const signature = request.headers.get('verif-hash') || ''
     const body = await request.json()
-
-    // Verify signature
-    // if (!verifyWebhookSignature(JSON.stringify(body), signature)) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    // }
-
     const { event, data } = body
 
-    if (event !== 'charge.completed') {
+    if (event !== 'charge.completed' || data.status !== 'successful') {
       return NextResponse.json({ status: 'ok' })
     }
 
-    const { meta, flw_ref, status, amount } = data
-
-    if (status !== 'successful') {
-      return NextResponse.json({ status: 'ok' })
-    }
-
-    const reference = meta?.reference
+    const reference = data.meta?.reference || data.tx_ref
 
     if (!reference) {
-      return NextResponse.json(
-        { error: 'Missing reference in webhook' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing reference' }, { status: 400 })
     }
 
-    // Update transaction and increment vote count
-    mockDb.updateTransaction(reference, 'completed')
+    // Use a transaction to ensure atomic update
+    await prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findUnique({
+        where: { flutterRef: reference },
+      })
+
+      if (transaction && transaction.status !== 'completed') {
+        // 1. Update transaction
+        await tx.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'completed',
+            voteApplied: true,
+            updatedAt: new Date(),
+          },
+        })
+
+        // 2. Increment vote count
+        await tx.contestant.update({
+          where: { id: transaction.contestantId },
+          data: {
+            voteCount: { increment: 1 },
+          },
+        })
+      }
+    })
+
+    // Trigger SSE broadcast
+    broadcastUpdate()
 
     return NextResponse.json({ status: 'ok' })
   } catch (error) {
     console.error('Webhook error:', error)
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }
 
@@ -56,33 +58,29 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const reference = request.nextUrl.searchParams.get('reference')
+    if (!reference) return NextResponse.json({ error: 'Missing reference' }, { status: 400 })
 
-    if (!reference) {
-      return NextResponse.json(
-        { error: 'Reference is required' },
-        { status: 400 }
-      )
-    }
+    await prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findUnique({
+        where: { flutterRef: reference },
+      })
 
-    // Simulate payment completion
-    const transaction = mockDb.updateTransaction(reference, 'completed')
+      if (transaction && transaction.status !== 'completed') {
+        await tx.transaction.update({
+          where: { id: transaction.id },
+          data: { status: 'completed', voteApplied: true },
+        })
 
-    if (!transaction) {
-      return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      status: 'ok',
-      transaction,
+        await tx.contestant.update({
+          where: { id: transaction.contestantId },
+          data: { voteCount: { increment: 1 } },
+        })
+      }
     })
+
+    broadcastUpdate()
+    return NextResponse.json({ status: 'ok' })
   } catch (error) {
-    console.error('Mock payment error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }
