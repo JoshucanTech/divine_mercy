@@ -15,14 +15,19 @@ export async function GET(request: NextRequest) {
           orderBy: { voteCount: 'desc' },
         })
 
-        controller.enqueue(
-          `data: ${JSON.stringify({
-            type: 'initial',
-            contestants,
-          })}\n\n`
-        )
+        if (!request.signal.aborted) {
+          controller.enqueue(
+            `data: ${JSON.stringify({
+              type: 'initial',
+              contestants,
+            })}\n\n`
+          )
+        }
       } catch (error) {
-        console.error('SSE Initial data error:', error)
+        // Only log if it's not a "closed controller" error which is expected on disconnect
+        if (!(error instanceof TypeError && error.message.includes('closed'))) {
+          console.error('SSE Initial data error:', error)
+        }
       }
 
       // Heartbeat
