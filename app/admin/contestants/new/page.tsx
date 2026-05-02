@@ -8,14 +8,16 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, UserPlus, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, UserPlus, Image as ImageIcon, Loader2, Sparkles, Upload } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { useRef } from 'react'
 
 export default function NewContestant() {
   const router = useRouter()
   const { status } = useSession()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +27,24 @@ export default function NewContestant() {
   if (status === 'unauthenticated') {
     router.push('/admin/login')
     return null
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Basic size check (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image is too large. Please select a file smaller than 2MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setFormData({ ...formData, image: reader.result as string })
+      toast.success('Image loaded successfully')
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,7 +125,7 @@ export default function NewContestant() {
                   Profile Image URL
                 </Label>
                 <div className="flex flex-col md:flex-row gap-6 items-start">
-                  <div className="flex-1 w-full">
+                  <div className="flex-1 w-full space-y-4">
                     <Input
                       id="image"
                       placeholder="https://example.com/image.jpg"
@@ -113,8 +133,27 @@ export default function NewContestant() {
                       value={formData.image}
                       onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                     />
+                    
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-12 rounded-xl border-dashed border-2 hover:bg-primary/5 hover:border-primary transition-all gap-2 font-bold"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload from Device
+                    </Button>
+                    
                     <p className="text-xs text-muted-foreground mt-2 ml-1">
-                      Enter a direct link to the contestant's photo.
+                      Paste a URL above or upload a photo from your device (Max 2MB).
                     </p>
                   </div>
                   

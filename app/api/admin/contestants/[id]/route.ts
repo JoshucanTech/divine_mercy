@@ -13,7 +13,7 @@ async function requireAuth() {
 
 const UpdateContestantSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  image: z.string().url().optional().or(z.literal('')).nullable(),
+  image: z.string().optional().nullable().or(z.literal('')),
   voteCount: z.number().int().min(0).optional(),
 })
 

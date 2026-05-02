@@ -8,15 +8,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Save, Trash2, Image as ImageIcon, Loader2, Trophy, PencilLine } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Image as ImageIcon, Loader2, Trophy, PencilLine, Upload } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { useRef } from 'react'
 
 export default function EditContestant() {
   const router = useRouter()
   const params = useParams()
   const { status } = useSession()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -35,6 +37,23 @@ export default function EditContestant() {
   if (status === 'unauthenticated') {
     router.push('/admin/login')
     return null
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image is too large. Please select a file smaller than 2MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setFormData({ ...formData, image: reader.result as string })
+      toast.success('Image loaded successfully')
+    }
+    reader.readAsDataURL(file)
   }
 
   const fetchContestant = async () => {
@@ -220,6 +239,24 @@ export default function EditContestant() {
                       )}
                     </div>
                   </div>
+                  
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 rounded-xl border-dashed border-2 hover:bg-primary/5 hover:border-primary transition-all gap-2 font-bold"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Change from Device
+                  </Button>
                 </div>
               </div>
             </div>

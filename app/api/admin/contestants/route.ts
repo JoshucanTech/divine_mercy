@@ -14,7 +14,7 @@ async function requireAuth() {
 
 const CreateContestantSchema = z.object({
   name: z.string().min(1).max(100),
-  image: z.string().url().optional().or(z.literal('')),
+  image: z.string().optional().nullable().or(z.literal('')),
 })
 
 export async function GET() {
