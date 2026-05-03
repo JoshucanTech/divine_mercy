@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Trophy, Medal, Crown, Vote, TrendingUp } from 'lucide-react'
 
-interface LeaderboardProps {
-  onVote: (contestant: Contestant) => void
-}
+import { useRouter } from 'next/navigation'
 
-export function Leaderboard({ onVote }: LeaderboardProps) {
+export function Leaderboard() {
+  const router = useRouter()
   const { contestants, isLoading, error } = useLeaderboard()
 
   if (isLoading) {
@@ -136,7 +135,7 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
                     </div>
 
                     <Button
-                      onClick={() => onVote(contestant)}
+                      onClick={() => router.push(`/vote/${contestant.id}`)}
                       className={`w-full h-12 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 font-black text-sm md:text-base shadow-xl transition-all active:scale-95 ${
                         isFirst 
                           ? 'bg-primary hover:bg-primary/90 shadow-primary/30' 
@@ -205,7 +204,7 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
                       size="sm"
                       variant="outline"
                       className="h-8 w-full rounded-lg text-xs font-bold border-primary/20 hover:bg-primary hover:text-white transition-all"
-                      onClick={() => onVote(contestant)}
+                      onClick={() => router.push(`/vote/${contestant.id}`)}
                     >
                       Cast Vote
                     </Button>

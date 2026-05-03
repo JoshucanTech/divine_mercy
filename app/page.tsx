@@ -3,14 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Leaderboard } from '@/components/Leaderboard'
-import { VoteModal } from '@/components/VoteModal'
 import { Button } from '@/components/ui/button'
-import { type Contestant } from '@/hooks/useLeaderboard'
 import { Trophy, ShieldCheck, Sparkles, UserCircle } from 'lucide-react'
 
 export default function Home() {
-  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null)
-  const [isVoteModalOpen, setIsVoteModalOpen] = useState(false)
   const [voteCost, setVoteCost] = useState(500)
   const [currency, setCurrency] = useState('NGN')
 
@@ -29,11 +25,6 @@ export default function Home() {
     }
     fetchSettings()
   }, [])
-
-  const handleVote = (contestant: Contestant) => {
-    setSelectedContestant(contestant)
-    setIsVoteModalOpen(true)
-  }
 
   return (
     <main className="min-h-screen bg-background font-sans selection:bg-primary/10">
@@ -119,7 +110,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Leaderboard onVote={handleVote} />
+        <Leaderboard />
       </section>
 
       {/* Footer */}
@@ -160,15 +151,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
-      {/* Vote Modal */}
-      <VoteModal
-        contestant={selectedContestant}
-        open={isVoteModalOpen}
-        onOpenChange={setIsVoteModalOpen}
-        voteCost={voteCost}
-        currency={currency}
-      />
     </main>
   )
 }
