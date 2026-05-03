@@ -11,7 +11,7 @@ import { Trophy, ShieldCheck, Sparkles, UserCircle } from 'lucide-react'
 export default function Home() {
   const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null)
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false)
-  const [voteCost, setVoteCost] = useState(100)
+  const [voteCost, setVoteCost] = useState(500)
   const [currency, setCurrency] = useState('NGN')
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          
+
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#leaderboard" className="text-sm font-medium hover:text-primary transition-colors">Leaderboard</Link>
             <Link href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">How it Works</Link>
@@ -83,14 +83,14 @@ export default function Home() {
             <Sparkles className="w-3 h-3" />
             <span>THE ANNUAL VOTE IS NOW LIVE</span>
           </div>
-          
+
           <h2 className="text-5xl sm:text-7xl font-bold tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-8 duration-1000">
             Help Choose the <br />
             <span className="text-gradient">Next Champion</span>
           </h2>
-          
+
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-1000">
-            Empower your favorite contestant with your support. Every vote brings them 
+            Empower your favorite contestant with your support. Every vote brings them
             one step closer to victory. Each vote costs only <span className="text-foreground font-bold">{currency} {voteCost}</span>.
           </p>
 
@@ -118,7 +118,7 @@ export default function Home() {
             Live Updates Enabled
           </div>
         </div>
-        
+
         <Leaderboard onVote={handleVote} />
       </section>
 
@@ -132,7 +132,7 @@ export default function Home() {
               </div>
               <span className="font-bold text-xl tracking-tight">DivineMercy</span>
             </div>
-            
+
             <div className="flex gap-12">
               <div className="space-y-4">
                 <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Platform</h4>
@@ -150,7 +150,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground font-medium">
             <p>© 2024 DivineMercy Voting Platform. All rights reserved.</p>
             <div className="flex gap-6">
