@@ -13,7 +13,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { ShieldCheck, Mail, User, Info, Check, Gem, Star, Zap, Award, Flame } from 'lucide-react'
+import { ShieldCheck, Mail, User, Info, Check, Gem, Star, Zap, Award, Flame, ChevronRight } from 'lucide-react'
 
 interface VotePackage {
   id: string
@@ -157,34 +157,74 @@ export function VoteModal({
           {contestant && (
             <div className="space-y-8">
               {/* Package Selection */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {VOTE_PACKAGES.map((pkg) => {
-                  const isSelected = selectedPackage.id === pkg.id
-                  return (
-                    <button
-                      key={pkg.id}
-                      type="button"
-                      onClick={() => setSelectedPackage(pkg)}
-                      className={`relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all border-2 text-center group ${
-                        isSelected 
-                          ? 'border-primary bg-primary/5 shadow-md scale-[1.02]' 
-                          : 'border-muted bg-muted/20 hover:border-primary/30'
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                  Select Voting Package
+                </label>
+                
+                {/* Desktop Grid (Hidden on Mobile) */}
+                <div className="hidden sm:grid grid-cols-3 gap-4">
+                  {VOTE_PACKAGES.map((pkg) => {
+                    const isSelected = selectedPackage.id === pkg.id
+                    return (
+                      <button
+                        key={pkg.id}
+                        type="button"
+                        onClick={() => setSelectedPackage(pkg)}
+                        className={`relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all border-2 text-center group ${
+                          isSelected 
+                            ? 'border-primary bg-primary/5 shadow-md scale-[1.02]' 
+                            : 'border-muted bg-muted/20 hover:border-primary/30'
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                            <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                        <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center ${pkg.color} transition-transform group-hover:scale-110`}>
+                          <pkg.icon className="w-6 h-6" />
                         </div>
-                      )}
-                      <div className={`w-10 h-10 rounded-xl mb-3 flex items-center justify-center ${pkg.color} transition-transform group-hover:scale-110`}>
-                        <pkg.icon className="w-6 h-6" />
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">{pkg.tag}</span>
+                        <span className="text-sm font-black text-foreground mb-1">{pkg.votes} {pkg.votes === 1 ? 'Vote' : 'Votes'}</span>
+                        <span className="text-lg font-black text-primary">#{pkg.price.toLocaleString()}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Mobile Dropdown (Hidden on Desktop) */}
+                <div className="sm:hidden space-y-2">
+                  <div className="relative">
+                    <select
+                      value={selectedPackage.id}
+                      onChange={(e) => {
+                        const pkg = VOTE_PACKAGES.find(p => p.id === e.target.value)
+                        if (pkg) setSelectedPackage(pkg)
+                      }}
+                      className="w-full h-16 opacity-0 absolute inset-0 z-10 cursor-pointer"
+                    >
+                      {VOTE_PACKAGES.map((pkg) => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.tag} - {pkg.votes} Votes (#{pkg.price.toLocaleString()})
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <div className="w-full h-16 rounded-2xl border-2 border-primary bg-primary/5 px-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedPackage.color}`}>
+                          <selectedPackage.icon className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1">{selectedPackage.tag} Package</p>
+                          <p className="text-sm font-black text-foreground">{selectedPackage.votes} Votes • <span className="text-primary">#{selectedPackage.price.toLocaleString()}</span></p>
+                        </div>
                       </div>
-                      <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">{pkg.tag}</span>
-                      <span className="text-sm font-black text-foreground mb-1">{pkg.votes} {pkg.votes === 1 ? 'Vote' : 'Votes'}</span>
-                      <span className="text-lg font-black text-primary">#{pkg.price.toLocaleString()}</span>
-                    </button>
-                  )
-                })}
+                      <ChevronRight className="w-5 h-5 text-primary rotate-90" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Form */}
