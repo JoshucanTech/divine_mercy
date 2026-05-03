@@ -27,6 +27,14 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
         orderBy: { createdAt: 'desc' },
+        include: {
+          contestant: {
+            select: {
+              name: true,
+              image: true,
+            }
+          }
+        }
       }),
       prisma.transaction.count({ where }),
     ])

@@ -16,6 +16,8 @@ model Contestant {
 
   @@index([voteCount])
   @@map("contestant")
+
+  transactions Transaction[]
 }
 
 model Transaction {
@@ -37,6 +39,8 @@ model Transaction {
   @@index([status])
   @@index([contestantId])
   @@map("transaction")
+
+  contestant Contestant @relation(fields: [contestantId], references: [id])
 }
 
 model Settings {
