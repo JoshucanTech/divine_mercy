@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const reference = data.meta?.reference || data.tx_ref
+    const customerEmail = data.customer?.email
 
     if (!reference) {
       return NextResponse.json({ error: 'Missing reference' }, { status: 400 })
@@ -24,21 +25,28 @@ export async function POST(request: NextRequest) {
       })
 
       if (transaction && transaction.status !== 'completed') {
-        // 1. Update transaction
+        // 1. Update transaction (optionally update email if it was anonymous)
+        const updateData: any = {
+          status: 'completed',
+          voteApplied: true,
+          updatedAt: new Date(),
+        }
+
+        // If the transaction had an anonymous email and we got one from Flutterwave, update it
+        if (transaction.voterEmail.endsWith('@divinemercy.voting') && customerEmail) {
+          updateData.voterEmail = customerEmail
+        }
+
         await tx.transaction.update({
           where: { id: transaction.id },
-          data: {
-            status: 'completed',
-            voteApplied: true,
-            updatedAt: new Date(),
-          },
+          data: updateData,
         })
 
-        // 2. Increment vote count
+        // 2. Increment vote count by the AMOUNT IN THE TRANSACTION
         await tx.contestant.update({
           where: { id: transaction.contestantId },
           data: {
-            voteCount: { increment: 1 },
+            voteCount: { increment: transaction.voteCount },
           },
         })
       }
@@ -73,7 +81,7 @@ export async function GET(request: NextRequest) {
 
         await tx.contestant.update({
           where: { id: transaction.contestantId },
-          data: { voteCount: { increment: 1 } },
+          data: { voteCount: { increment: transaction.voteCount } },
         })
       }
     })
@@ -81,6 +89,7 @@ export async function GET(request: NextRequest) {
     broadcastUpdate()
     return NextResponse.json({ status: 'ok' })
   } catch (error) {
+    console.error('Mock payment error:', error)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }

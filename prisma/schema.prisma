@@ -24,6 +24,7 @@ model Transaction {
   voterEmail   String
   voterName    String?
   amount       Float
+  voteCount    Int      @default(1)
   currency     String   @default("NGN")
   flutterRef   String?  @unique
   status       String   @default("pending")
@@ -39,7 +40,7 @@ model Transaction {
 }
 
 model Settings {
-  id           String  @id @unique @default("singleton")
+  id           String  @id @default("singleton")
   voteCost     Float   @default(100)
   currency     String  @default("NGN")
   votingActive Boolean @default(true)

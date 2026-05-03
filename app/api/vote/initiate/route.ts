@@ -4,15 +4,17 @@ import { z } from 'zod'
 
 const VoteRequestSchema = z.object({
   contestantId: z.string().min(1),
-  voterEmail: z.string().email(),
-  voterName: z.string().optional(),
-  voterPhone: z.string().optional(),
+  voterEmail: z.string().email().optional().nullable(),
+  voterName: z.string().optional().nullable(),
+  packageId: z.string().min(1),
+  amount: z.number().positive(),
+  voteCount: z.number().int().positive(),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { contestantId, voterEmail, voterName } = VoteRequestSchema.parse(body)
+    const { contestantId, voterEmail, voterName, amount, voteCount } = VoteRequestSchema.parse(body)
 
     // 1. Check voting is active
     const settings = await prisma.settings.findUnique({
@@ -38,17 +40,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Create pending transaction
+    // 3. Handle optional email
+    const finalEmail = voterEmail || `anon_${Date.now()}@divinemercy.voting`
+
+    // 4. Create pending transaction with the specific vote count
     const reference = 'TXN' + Date.now() + Math.random().toString(36).substr(2, 9)
     const transaction = await prisma.transaction.create({
       data: {
         contestantId,
-        voterEmail,
+        voterEmail: finalEmail,
         voterName: voterName || null,
-        amount: settings.voteCost,
+        amount,
+        voteCount, // Store the number of votes purchased
         currency: settings.currency,
         status: 'pending',
-        flutterRef: reference, // Using reference as flutterRef for now
+        flutterRef: reference,
       },
     })
 
@@ -61,6 +67,7 @@ export async function POST(request: NextRequest) {
       reference: transaction.flutterRef,
       amount: transaction.amount,
       currency: transaction.currency,
+      voteCount: transaction.voteCount,
       paymentUrl: mockPaymentUrl,
     })
   } catch (error) {
