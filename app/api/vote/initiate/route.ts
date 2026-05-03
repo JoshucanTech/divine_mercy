@@ -58,9 +58,46 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // For demo/development, return a mock payment URL
-    // In production, you would call Flutterwave API here to get a real payment URL
-    const mockPaymentUrl = `/vote/payment?reference=${reference}`
+    // 5. Initiate Flutterwave Payment
+    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
+    let paymentUrl = `/vote/payment?reference=${reference}` // Fallback mock URL
+
+    if (secretKey && !secretKey.includes('your-secret')) {
+      try {
+        const response = await fetch('https://api.flutterwave.com/v3/payments', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tx_ref: reference,
+            amount: transaction.amount,
+            currency: transaction.currency,
+            redirect_url: `${process.env.NEXTAUTH_URL}/vote/verify`,
+            customer: {
+              email: transaction.voterEmail,
+              name: transaction.voterName || 'Anonymous Voter',
+            },
+            customizations: {
+              title: 'DivineMercy Voting',
+              description: `Voting for ${contestant.name} (${transaction.voteCount} votes)`,
+              logo: 'https://divinemercy.voting/logo.png',
+            },
+          }),
+        })
+
+        const fwData = await response.json()
+        if (fwData.status === 'success') {
+          paymentUrl = fwData.data.link
+        } else {
+          console.error('Flutterwave initiation error:', fwData)
+          // Still return mock URL in dev if FW fails
+        }
+      } catch (err) {
+        console.error('Fetch error calling Flutterwave:', err)
+      }
+    }
 
     return NextResponse.json({
       transactionId: transaction.id,
@@ -68,7 +105,7 @@ export async function POST(request: NextRequest) {
       amount: transaction.amount,
       currency: transaction.currency,
       voteCount: transaction.voteCount,
-      paymentUrl: mockPaymentUrl,
+      paymentUrl,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
