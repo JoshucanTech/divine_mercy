@@ -4,9 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 
-export default function MockPaymentPage() {
+function PaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reference = searchParams.get('reference')
@@ -60,5 +60,17 @@ export default function MockPaymentPage() {
         </Button>
       </Card>
     </div>
+  )
+}
+
+export default function MockPaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   )
 }

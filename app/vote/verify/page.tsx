@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { CheckCircle2, XCircle, Loader2, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-export default function VoteVerifyPage() {
+function VerifyContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -31,7 +31,6 @@ export default function VoteVerifyPage() {
       }
 
       try {
-        // We call our own verification endpoint (mock or real)
         const res = await fetch(`/api/webhook/flutterwave?reference=${txRef}`)
         if (res.ok) {
           setStatus('success')
@@ -97,5 +96,17 @@ export default function VoteVerifyPage() {
         )}
       </Card>
     </div>
+  )
+}
+
+export default function VoteVerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   )
 }
