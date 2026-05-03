@@ -69,21 +69,25 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
             const rankOrder = isFirst ? 'order-1 md:order-2' : (isSecond ? 'order-2 md:order-1' : 'order-3 md:order-3')
             
             return (
-              <div key={contestant.id} className={`${rankOrder} flex flex-col items-center`}>
+              <div key={contestant.id} className={`${rankOrder} flex flex-col items-center w-full px-2 md:px-0`}>
                 <Card
-                  className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] bg-card rounded-[2.5rem] border-none shadow-2xl ${
+                  className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] bg-card rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl ${
                     isFirst 
-                      ? 'w-full md:scale-110 z-20 ring-4 ring-primary/20 shadow-primary/20' 
-                      : 'w-full md:scale-95 z-10 shadow-black/5'
+                      ? 'w-full max-w-[340px] md:max-w-none md:scale-110 z-20 ring-4 ring-primary/20 shadow-primary/20' 
+                      : 'w-full max-w-[300px] md:max-w-none md:scale-95 z-10 shadow-black/5'
                   }`}
                 >
                   {/* Rank Badge */}
-                  <div className={`absolute top-6 left-6 z-30 w-12 h-12 rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20`}>
-                    <Icon className={`w-7 h-7 ${medalColor} animate-pulse`} />
+                  <div className={`absolute top-4 left-4 md:top-6 md:left-6 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20`}>
+                    <Icon className={`w-6 h-6 md:w-7 md:h-7 ${medalColor} animate-pulse`} />
                   </div>
 
                   {/* Image Section */}
-                  <div className={`${isFirst ? 'aspect-[4/5]' : 'aspect-square'} relative bg-muted overflow-hidden`}>
+                  <div className={`relative bg-muted overflow-hidden ${
+                    isFirst 
+                      ? 'aspect-[4/3] md:aspect-[4/5]' 
+                      : 'aspect-[3/2] md:aspect-square'
+                  }`}>
                     {contestant.image ? (
                       <Image
                         src={contestant.image}
@@ -93,7 +97,7 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-                        <span className="text-7xl grayscale opacity-20">👤</span>
+                        <span className="text-5xl md:text-7xl grayscale opacity-20">👤</span>
                       </div>
                     )}
                     
@@ -101,52 +105,52 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                     
                     {/* Content on Image */}
-                    <div className="absolute bottom-6 left-6 right-6 text-white">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                    <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 text-white">
+                      <div className="flex items-center gap-2 mb-1 md:mb-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest ${
                           isFirst ? 'bg-yellow-500 text-black' : 'bg-white/20 backdrop-blur-md text-white'
                         }`}>
                           Rank #{rank}
                         </span>
                       </div>
-                      <h3 className={`${isFirst ? 'text-2xl' : 'text-xl'} font-black truncate drop-shadow-md`}>
+                      <h3 className={`${isFirst ? 'text-lg md:text-2xl' : 'text-base md:text-xl'} font-black truncate drop-shadow-md`}>
                         {contestant.name}
                       </h3>
                     </div>
                   </div>
 
                   {/* Stats Section */}
-                  <div className="p-8 space-y-6">
+                  <div className="p-5 md:p-8 space-y-4 md:space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-3xl font-black text-foreground tracking-tight">
+                        <p className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
                           {contestant.voteCount.toLocaleString()}
                         </p>
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Captured Votes</p>
+                        <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest">Captured Votes</p>
                       </div>
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-colors ${
+                      <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center border transition-colors ${
                         isFirst ? 'bg-primary/10 border-primary/20' : 'bg-muted/50 border-muted'
                       }`}>
-                        <TrendingUp className={`w-6 h-6 ${isFirst ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <TrendingUp className={`w-5 h-5 md:w-6 md:h-6 ${isFirst ? 'text-primary' : 'text-muted-foreground'}`} />
                       </div>
                     </div>
 
                     <Button
                       onClick={() => onVote(contestant)}
-                      className={`w-full h-14 rounded-2xl gap-3 font-black text-base shadow-xl transition-all active:scale-95 ${
+                      className={`w-full h-12 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 font-black text-sm md:text-base shadow-xl transition-all active:scale-95 ${
                         isFirst 
                           ? 'bg-primary hover:bg-primary/90 shadow-primary/30' 
                           : 'bg-secondary hover:bg-secondary/90 shadow-secondary/10'
                       }`}
                     >
-                      <Vote className="w-5 h-5" />
+                      <Vote className="w-4 h-4 md:w-5 md:h-5" />
                       Vote For Me
                     </Button>
                   </div>
 
                   {/* Glow Effect for Winner */}
                   {isFirst && (
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-yellow-500/10 to-primary/20 rounded-[2.6rem] blur-2xl -z-10 opacity-50" />
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-yellow-500/10 to-primary/20 rounded-[2.1rem] md:rounded-[2.6rem] blur-2xl -z-10 opacity-50" />
                   )}
                 </Card>
               </div>

@@ -6,9 +6,10 @@ import { PrismaClient } from '@prisma/client'
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 const connectionString = process.env.DATABASE_URL
-const pool = new Pool({ 
+const pool = new Pool({
   connectionString,
-  ssl: connectionString?.includes('render.com') ? { rejectUnauthorized: false } : false
+  ssl: connectionString?.includes('render.com') ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 5000, // 5 seconds timeout
 })
 const adapter = new PrismaPg(pool)
 
