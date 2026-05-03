@@ -52,65 +52,107 @@ export function Leaderboard({ onVote }: LeaderboardProps) {
   return (
     <div className="space-y-12">
       {/* Podium - Top 3 Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {contestants.slice(0, 3).map((contestant, index) => {
-          const isFirst = index === 0
-          const Icon = isFirst ? Crown : (index === 1 ? Medal : Trophy)
-          const medalColor = isFirst ? 'text-yellow-500' : (index === 1 ? 'text-slate-400' : 'text-amber-600')
-          const cardClass = isFirst ? 'md:-mt-6 border-primary/20 shadow-2xl shadow-primary/10 ring-2 ring-primary/20' : 'border-muted'
-          
-          return (
-            <Card
-              key={contestant.id}
-              className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] bg-card rounded-3xl ${cardClass}`}
-            >
-              <div className={`absolute top-4 left-4 z-10 w-10 h-10 rounded-xl bg-white/90 dark:bg-black/80 backdrop-blur-md flex items-center justify-center shadow-lg`}>
-                <Icon className={`w-6 h-6 ${medalColor}`} />
-              </div>
+      <div className="relative pt-12 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end max-w-5xl mx-auto">
+          {/* Order for Podium: 2nd, 1st, 3rd */}
+          {[1, 0, 2].map((contestantIndex) => {
+            const contestant = contestants[contestantIndex]
+            if (!contestant) return null
 
-              <div className="aspect-[4/5] relative bg-muted overflow-hidden">
-                {contestant.image ? (
-                  <Image
-                    src={contestant.image}
-                    alt={contestant.name}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-                    <span className="text-6xl grayscale opacity-20">👤</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">Rank #{index + 1}</p>
-                  <h3 className="text-xl font-bold truncate">{contestant.name}</h3>
-                </div>
-              </div>
+            const rank = contestantIndex + 1
+            const isFirst = rank === 1
+            const isSecond = rank === 2
+            const isThird = rank === 3
 
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-2xl font-black text-foreground">
-                      {contestant.voteCount.toLocaleString()}
-                    </p>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Total Votes</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10">
-                    <TrendingUp className="text-primary w-6 h-6" />
-                  </div>
-                </div>
-                <Button
-                  onClick={() => onVote(contestant)}
-                  className="w-full h-12 rounded-2xl gap-2 font-bold shadow-lg shadow-primary/10 transition-all active:scale-95"
+            const Icon = isFirst ? Crown : (isSecond ? Medal : Trophy)
+            const medalColor = isFirst ? 'text-yellow-500' : (isSecond ? 'text-slate-400' : 'text-amber-600')
+            const rankOrder = isFirst ? 'order-1 md:order-2' : (isSecond ? 'order-2 md:order-1' : 'order-3 md:order-3')
+            
+            return (
+              <div key={contestant.id} className={`${rankOrder} flex flex-col items-center`}>
+                <Card
+                  className={`group relative overflow-hidden transition-all duration-500 hover:scale-[1.03] bg-card rounded-[2.5rem] border-none shadow-2xl ${
+                    isFirst 
+                      ? 'w-full md:scale-110 z-20 ring-4 ring-primary/20 shadow-primary/20' 
+                      : 'w-full md:scale-95 z-10 shadow-black/5'
+                  }`}
                 >
-                  <Vote className="w-4 h-4" />
-                  Cast Vote
-                </Button>
+                  {/* Rank Badge */}
+                  <div className={`absolute top-6 left-6 z-30 w-12 h-12 rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20`}>
+                    <Icon className={`w-7 h-7 ${medalColor} animate-pulse`} />
+                  </div>
+
+                  {/* Image Section */}
+                  <div className={`${isFirst ? 'aspect-[4/5]' : 'aspect-square'} relative bg-muted overflow-hidden`}>
+                    {contestant.image ? (
+                      <Image
+                        src={contestant.image}
+                        alt={contestant.name}
+                        fill
+                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+                        <span className="text-7xl grayscale opacity-20">👤</span>
+                      </div>
+                    )}
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                    
+                    {/* Content on Image */}
+                    <div className="absolute bottom-6 left-6 right-6 text-white">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          isFirst ? 'bg-yellow-500 text-black' : 'bg-white/20 backdrop-blur-md text-white'
+                        }`}>
+                          Rank #{rank}
+                        </span>
+                      </div>
+                      <h3 className={`${isFirst ? 'text-2xl' : 'text-xl'} font-black truncate drop-shadow-md`}>
+                        {contestant.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Stats Section */}
+                  <div className="p-8 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-3xl font-black text-foreground tracking-tight">
+                          {contestant.voteCount.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Captured Votes</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-colors ${
+                        isFirst ? 'bg-primary/10 border-primary/20' : 'bg-muted/50 border-muted'
+                      }`}>
+                        <TrendingUp className={`w-6 h-6 ${isFirst ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => onVote(contestant)}
+                      className={`w-full h-14 rounded-2xl gap-3 font-black text-base shadow-xl transition-all active:scale-95 ${
+                        isFirst 
+                          ? 'bg-primary hover:bg-primary/90 shadow-primary/30' 
+                          : 'bg-secondary hover:bg-secondary/90 shadow-secondary/10'
+                      }`}
+                    >
+                      <Vote className="w-5 h-5" />
+                      Vote For Me
+                    </Button>
+                  </div>
+
+                  {/* Glow Effect for Winner */}
+                  {isFirst && (
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-yellow-500/10 to-primary/20 rounded-[2.6rem] blur-2xl -z-10 opacity-50" />
+                  )}
+                </Card>
               </div>
-            </Card>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       {/* All Contestants Grid */}

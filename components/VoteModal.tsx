@@ -116,14 +116,40 @@ export function VoteModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl max-h-[90vh] overflow-y-auto">
         <div className="bg-primary px-8 py-10 text-white relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-2xl -ml-16 -mb-16" />
+          
           <DialogHeader className="relative z-10">
-            <DialogTitle className="text-3xl font-black tracking-tight leading-none mb-2 text-white">
-              Choose Your Package
-            </DialogTitle>
-            <DialogDescription className="text-primary-foreground/80 font-medium">
-              Supporting <span className="text-white font-bold">{contestant?.name}</span>
-            </DialogDescription>
+            <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl relative">
+                  {contestant?.image ? (
+                    <Image
+                      src={contestant.image}
+                      alt={contestant.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-white/10">
+                      <User className="w-12 h-12 text-white/50" />
+                    </div>
+                  )}
+                </div>
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-yellow-500 flex items-center justify-center shadow-lg border-2 border-primary">
+                  <Star className="w-4 h-4 text-primary fill-primary" />
+                </div>
+              </div>
+              
+              <div className="flex-1">
+                <DialogTitle className="text-3xl font-black tracking-tight leading-none mb-3 text-white">
+                  Cast Your Vote
+                </DialogTitle>
+                <DialogDescription className="text-primary-foreground/90 text-base font-medium">
+                  You are supporting <span className="text-white font-bold underline decoration-yellow-500/50 decoration-2 underline-offset-4">{contestant?.name}</span>
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
         </div>
 
