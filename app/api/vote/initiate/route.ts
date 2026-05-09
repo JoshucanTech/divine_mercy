@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
     })
 
     // 5. Initiate Flutterwave Payment
-    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
+    const rawSecretKey = process.env.FLUTTERWAVE_SECRET_KEY
+    const secretKey = rawSecretKey?.trim().replace(/^["']|["']$/g, '')
+
     if (!secretKey || secretKey.includes('your-secret')) {
       return NextResponse.json(
         { error: 'Payment integration is not configured.' },
