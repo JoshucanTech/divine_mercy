@@ -62,34 +62,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Mock endpoint for testing payment completion
-export async function GET(request: NextRequest) {
-  try {
-    const reference = request.nextUrl.searchParams.get('reference')
-    if (!reference) return NextResponse.json({ error: 'Missing reference' }, { status: 400 })
-
-    await prisma.$transaction(async (tx) => {
-      const transaction = await tx.transaction.findUnique({
-        where: { flutterRef: reference },
-      })
-
-      if (transaction && transaction.status !== 'completed') {
-        await tx.transaction.update({
-          where: { id: transaction.id },
-          data: { status: 'completed', voteApplied: true },
-        })
-
-        await tx.contestant.update({
-          where: { id: transaction.contestantId },
-          data: { voteCount: { increment: transaction.voteCount } },
-        })
-      }
-    })
-
-    broadcastUpdate()
-    return NextResponse.json({ status: 'ok' })
-  } catch (error) {
-    console.error('Mock payment error:', error)
-    return NextResponse.json({ error: 'Failed' }, { status: 500 })
-  }
-}
