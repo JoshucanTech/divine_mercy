@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockDb } from '@/lib/mock-db'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const transaction = mockDb.getTransaction(reference)
+    const transaction = await prisma.transaction.findUnique({
+      where: { flutterRef: reference },
+    })
 
     if (!transaction) {
       return NextResponse.json(
@@ -23,9 +25,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       id: transaction.id,
-      reference: transaction.reference,
+      reference: transaction.flutterRef,
       status: transaction.status,
       amount: transaction.amount,
+      currency: transaction.currency,
+      voteApplied: transaction.voteApplied,
     })
   } catch (error) {
     console.error('Verify vote error:', error)
