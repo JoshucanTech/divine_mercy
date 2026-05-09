@@ -28,21 +28,25 @@ async function main() {
     console.error('Error initializing settings:', error)
   }
 
+  const email = process.env.Email
+  const password = process.env.Password
+
   // 2. Initialize Admin User (from init-db.ts:L30)
   try {
     const adminCount = await prisma.adminUser.count()
+
     if (adminCount === 0) {
-      const hashedPassword = await hashPassword('admin123')
+      const hashedPassword = await hashPassword(password!)
       await prisma.adminUser.create({
         data: {
-          email: 'admin@example.com',
+          email: email!,
           passwordHash: hashedPassword,
           name: 'Administrator',
         },
       })
       console.log('✅ Default admin user created')
-      console.log('   Email: admin@example.com')
-      console.log('   Password: admin123')
+      console.log('   Email: ', email)
+      console.log('   Password: ', password)
     } else {
       console.log('ℹ️ Admin user already exists, skipping...')
     }
@@ -97,8 +101,8 @@ async function main() {
 
   console.log('🌱 Database seed completed!')
   console.log('\n📝 Admin Credentials:')
-  console.log('   Email: admin@example.com')
-  console.log('   Password: admin123')
+  console.log('   Email: ', email)
+  console.log('   Password: ', password)
   console.log('   ⚠️  Change this password in production!')
 }
 
