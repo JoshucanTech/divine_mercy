@@ -19,11 +19,12 @@ const UpdateContestantSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const contestant = await prisma.contestant.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!contestant) {
@@ -45,17 +46,18 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = await requireAuth()
   if (authError) return authError
 
   try {
+    const { id } = await params
     const body = await request.json()
     const updates = UpdateContestantSchema.parse(body)
 
     const contestant = await prisma.contestant.update({
-      where: { id: params.id },
+      where: { id },
       data: updates,
     })
 
@@ -78,14 +80,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = await requireAuth()
   if (authError) return authError
 
   try {
+    const { id } = await params
     await prisma.contestant.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Contestant deleted successfully' })

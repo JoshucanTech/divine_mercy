@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "Contestant" (
+CREATE TABLE "contestant" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "image" TEXT,
@@ -7,16 +7,17 @@ CREATE TABLE "Contestant" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Contestant_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "contestant_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Transaction" (
+CREATE TABLE "transaction" (
     "id" TEXT NOT NULL,
     "contestantId" TEXT NOT NULL,
     "voterEmail" TEXT NOT NULL,
     "voterName" TEXT,
     "amount" DOUBLE PRECISION NOT NULL,
+    "voteCount" INTEGER NOT NULL DEFAULT 1,
     "currency" TEXT NOT NULL DEFAULT 'NGN',
     "flutterRef" TEXT,
     "status" TEXT NOT NULL DEFAULT 'pending',
@@ -25,21 +26,21 @@ CREATE TABLE "Transaction" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "transaction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Settings" (
+CREATE TABLE "settings" (
     "id" TEXT NOT NULL DEFAULT 'singleton',
     "voteCost" DOUBLE PRECISION NOT NULL DEFAULT 100,
     "currency" TEXT NOT NULL DEFAULT 'NGN',
     "votingActive" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "Settings_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "settings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "AdminUser" (
+CREATE TABLE "admin_user" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -47,26 +48,26 @@ CREATE TABLE "AdminUser" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "AdminUser_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "admin_user_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE INDEX "Contestant_voteCount_idx" ON "Contestant"("voteCount");
+CREATE INDEX "contestant_voteCount_idx" ON "contestant"("voteCount");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Transaction_flutterRef_key" ON "Transaction"("flutterRef");
+CREATE UNIQUE INDEX "transaction_flutterRef_key" ON "transaction"("flutterRef");
 
 -- CreateIndex
-CREATE INDEX "Transaction_flutterRef_idx" ON "Transaction"("flutterRef");
+CREATE INDEX "transaction_flutterRef_idx" ON "transaction"("flutterRef");
 
 -- CreateIndex
-CREATE INDEX "Transaction_status_idx" ON "Transaction"("status");
+CREATE INDEX "transaction_status_idx" ON "transaction"("status");
 
 -- CreateIndex
-CREATE INDEX "Transaction_contestantId_idx" ON "Transaction"("contestantId");
+CREATE INDEX "transaction_contestantId_idx" ON "transaction"("contestantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Settings_id_key" ON "Settings"("id");
+CREATE UNIQUE INDEX "admin_user_email_key" ON "admin_user"("email");
 
--- CreateIndex
-CREATE UNIQUE INDEX "AdminUser_email_key" ON "AdminUser"("email");
+-- AddForeignKey
+ALTER TABLE "transaction" ADD CONSTRAINT "transaction_contestantId_fkey" FOREIGN KEY ("contestantId") REFERENCES "contestant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

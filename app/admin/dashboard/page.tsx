@@ -1,15 +1,36 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { AdminHeader } from '@/components/AdminHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Users, Vote, Trophy, ArrowRight, Image as ImageIcon, Search, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, Users, Vote, Trophy, ArrowRight, Image as ImageIcon, Search, TrendingUp, Upload } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Loader2 } from 'lucide-react'
 
 interface Contestant {
   id: string
@@ -26,6 +47,14 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Modal states
+  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editFormData, setEditFormData] = useState({ name: '', image: '' })
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -54,8 +83,6 @@ export default function AdminDashboard() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this contestant?')) return
-
     try {
       setIsDeleting(id)
       const res = await fetch(`/api/admin/contestants/${id}`, {
@@ -63,11 +90,72 @@ export default function AdminDashboard() {
       })
       if (res.ok) {
         setContestants(contestants.filter((c) => c.id !== id))
+        toast.success('Contestant deleted successfully')
+      } else {
+        toast.error('Failed to delete contestant')
       }
     } catch (err) {
       console.error('Delete failed:', err)
+      toast.error('An unexpected error occurred')
     } finally {
       setIsDeleting(null)
+      setIsDeleteDialogOpen(false)
+      setSelectedContestant(null)
+    }
+  }
+
+  const handleOpenEdit = (contestant: Contestant) => {
+    setSelectedContestant(contestant)
+    setEditFormData({
+      name: contestant.name,
+      image: contestant.image || '',
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image is too large. Please select a file smaller than 2MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setEditFormData({ ...editFormData, image: reader.result as string })
+      toast.success('Image loaded successfully')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedContestant) return
+
+    try {
+      setIsSubmitting(true)
+      const res = await fetch(`/api/admin/contestants/${selectedContestant.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      })
+
+      if (res.ok) {
+        const updated = await res.json()
+        setContestants(contestants.map(c => c.id === updated.id ? updated : c))
+        toast.success('Contestant updated successfully')
+        setIsEditDialogOpen(false)
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'Failed to update contestant')
+      }
+    } catch (err) {
+      console.error('Update failed:', err)
+      toast.error('An unexpected error occurred')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -183,7 +271,10 @@ export default function AdminDashboard() {
                         variant="ghost"
                         size="icon"
                         className="rounded-xl h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
-                        onClick={() => handleDelete(contestant.id)}
+                        onClick={() => {
+                          setSelectedContestant(contestant)
+                          setIsDeleteDialogOpen(true)
+                        }}
                         disabled={isDeleting === contestant.id}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -206,12 +297,10 @@ export default function AdminDashboard() {
                   <Button
                     variant="outline"
                     className="w-full h-11 rounded-xl font-bold bg-muted/10 border-muted group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all gap-2"
-                    asChild
+                    onClick={() => handleOpenEdit(contestant)}
                   >
-                    <Link href={`/admin/contestants/${contestant.id}`}>
-                      Edit Profile
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
+                    Edit Profile
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </Card>
@@ -219,6 +308,139 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Edit Contestant Modal */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-[2rem] border-none p-0 overflow-hidden shadow-2xl">
+          <div className="p-8 bg-card">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="text-2xl font-black flex items-center gap-2">
+                Edit <span className="text-primary">Contestant</span>
+              </DialogTitle>
+              <DialogDescription className="font-medium text-muted-foreground">
+                Update details for {selectedContestant?.name}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSaveEdit} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="edit-name" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Full Name
+                </Label>
+                <Input
+                  id="edit-name"
+                  className="h-12 rounded-xl bg-muted/30 border-muted focus:bg-card focus:ring-2 focus:ring-primary/20 transition-all font-medium px-4"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="edit-image" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Profile Image
+                </Label>
+                <div className="flex gap-4 items-center">
+                  <Input
+                    id="edit-image"
+                    className="h-12 rounded-xl bg-muted/30 border-muted focus:bg-card focus:ring-2 focus:ring-primary/20 transition-all font-medium px-4"
+                    value={editFormData.image}
+                    onChange={(e) => setEditFormData({ ...editFormData, image: e.target.value })}
+                    placeholder="Image URL or upload below"
+                    disabled={isSubmitting}
+                  />
+                  <div className="w-12 h-12 rounded-xl bg-muted flex-shrink-0 overflow-hidden ring-1 ring-black/5">
+                    {editFormData.image ? (
+                      <Image
+                        src={editFormData.image}
+                        alt="Preview"
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-4 h-4 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 rounded-xl border-dashed border-2 hover:bg-primary/5 hover:border-primary transition-all gap-2 font-bold text-xs"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload New Image
+                </Button>
+              </div>
+
+              <DialogFooter className="pt-4 gap-2 sm:gap-0">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  disabled={isSubmitting}
+                  className="rounded-xl font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="rounded-xl font-black shadow-lg shadow-primary/20 px-8"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2rem] border-none p-0 overflow-hidden shadow-2xl sm:max-w-md">
+          <div className="p-8 bg-card">
+            <AlertDialogHeader className="mb-6">
+              <AlertDialogTitle className="text-2xl font-black text-destructive flex items-center gap-2">
+                Delete <span className="text-foreground">Contestant?</span>
+              </AlertDialogTitle>
+              <AlertDialogDescription className="font-medium text-muted-foreground leading-relaxed">
+                This will permanently remove <span className="font-bold text-foreground">{selectedContestant?.name}</span> from the platform. All associated data will be lost.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2 sm:gap-0">
+              <AlertDialogCancel className="rounded-xl font-bold border-muted" disabled={isDeleting !== null}>
+                Keep Contestant
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (selectedContestant) handleDelete(selectedContestant.id)
+                }}
+                className="rounded-xl font-black bg-destructive hover:bg-destructive/90 text-white shadow-lg shadow-destructive/20"
+                disabled={isDeleting !== null}
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Yes, Delete Permanently'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
