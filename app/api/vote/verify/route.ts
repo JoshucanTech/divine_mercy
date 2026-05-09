@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 1. Verify with Flutterwave
-    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
+    const rawSecretKey = process.env.FLUTTERWAVE_SECRET_KEY
+    const secretKey = rawSecretKey?.trim().replace(/^["']|["']$/g, '')
+
     const fwRes = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
       method: 'GET',
       headers: {
