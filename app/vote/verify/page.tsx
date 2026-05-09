@@ -16,6 +16,7 @@ function VerifyContent() {
   useEffect(() => {
     const verifyPayment = async () => {
       const txRef = searchParams.get('tx_ref')
+      const transactionId = searchParams.get('transaction_id')
       const fwStatus = searchParams.get('status')
 
       if (fwStatus === 'cancelled') {
@@ -24,23 +25,24 @@ function VerifyContent() {
         return
       }
 
-      if (!txRef) {
+      if (!txRef || !transactionId) {
         setStatus('error')
-        setMessage('Missing transaction reference.')
+        setMessage('Missing transaction details.')
         return
       }
 
       try {
-        const res = await fetch(`/api/webhook/flutterwave?reference=${txRef}`)
+        const res = await fetch(`/api/vote/verify?transaction_id=${transactionId}&tx_ref=${txRef}`)
         if (res.ok) {
           setStatus('success')
           setMessage('Thank you! Your vote has been recorded.')
         } else {
-          throw new Error('Verification failed')
+          const data = await res.json()
+          throw new Error(data.error || 'Verification failed')
         }
       } catch (err) {
         setStatus('error')
-        setMessage('Failed to verify payment. Please contact support if you were charged.')
+        setMessage(err instanceof Error ? err.message : 'Failed to verify payment. Please contact support if you were charged.')
       }
     }
 
