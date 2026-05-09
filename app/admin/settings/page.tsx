@@ -7,8 +7,9 @@ import { AdminHeader } from '@/components/AdminHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { Settings as SettingsIcon, Coins, Globe, Power, Save, RefreshCcw, History, ArrowRight } from 'lucide-react'
+import { Settings as SettingsIcon, Coins, Globe, Power, Save, RefreshCcw, History, ArrowRight, User } from 'lucide-react'
 import Link from 'next/link'
+import { AdminProfile } from '@/components/AdminProfile'
 
 interface Settings {
   id: string
@@ -214,6 +215,18 @@ export default function AdminSettings() {
               </div>
             </form>
           </Card>
+
+          <div className="mt-8 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10">
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <h2 className="text-3xl font-black tracking-tight text-foreground">Admin Account</h2>
+            </div>
+            <p className="text-muted-foreground font-medium">Update your administrative credentials and profile</p>
+          </div>
+
+          <AdminProfile />
 
           {/* Activity Log Callout */}
           <Card className="rounded-[2.5rem] p-8 bg-muted/20 border-dashed border-2 border-muted flex items-center justify-between group hover:border-primary/20 transition-colors">

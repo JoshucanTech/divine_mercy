@@ -49,7 +49,7 @@ export function AdminHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="rounded-xl border-muted bg-card shadow-sm hover:bg-muted/10 font-bold h-10 px-4 gap-2">
                   <User className="w-4 h-4 text-primary" />
-                  <span className="hidden sm:inline">{session?.user?.email?.split('@')[0] || 'Administrator'}</span>
+                  <span className="hidden sm:inline">{session?.user?.name || session?.user?.email?.split('@')[0] || 'Administrator'}</span>
                   <Menu className="w-4 h-4 text-muted-foreground ml-1" />
                 </Button>
               </DropdownMenuTrigger>
