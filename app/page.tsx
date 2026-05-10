@@ -15,6 +15,13 @@ export default async function Home() {
       prisma.settings.findFirst(),
       prisma.contestant.findMany({
         orderBy: { voteCount: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          voteCount: true,
+          createdAt: true,
+          updatedAt: true,
+        }
       })
     ])
     settings = s
