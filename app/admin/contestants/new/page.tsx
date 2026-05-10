@@ -13,6 +13,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { useRef } from 'react'
+import { compressImage } from '@/lib/image-utils'
 
 export default function NewContestant() {
   const router = useRouter()
@@ -40,9 +41,18 @@ export default function NewContestant() {
     }
 
     const reader = new FileReader()
-    reader.onloadend = () => {
-      setFormData({ ...formData, image: reader.result as string })
-      toast.success('Image loaded successfully')
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result as string
+        // Compress the image to max 600px width/height for database storage efficiency
+        const compressed = await compressImage(base64, 600, 600, 0.7)
+        setFormData({ ...formData, image: compressed })
+        toast.success('Image loaded and compressed successfully')
+      } catch (error) {
+        console.error('Compression error:', error)
+        setFormData({ ...formData, image: reader.result as string })
+        toast.error('Failed to compress image, using original.')
+      }
     }
     reader.readAsDataURL(file)
   }

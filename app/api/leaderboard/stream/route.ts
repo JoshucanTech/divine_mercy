@@ -61,9 +61,15 @@ export async function GET(request: NextRequest) {
 // Broadcast update to all connected clients
 export async function broadcastUpdate() {
   try {
+    // Only select essential fields for updates to keep the payload tiny
     const contestants = await prisma.contestant.findMany({
+      select: {
+        id: true,
+        voteCount: true,
+      },
       orderBy: { voteCount: 'desc' },
     })
+    
     const message = `data: ${JSON.stringify({ type: 'update', contestants })}\n\n`
     
     clients.forEach((controller) => {

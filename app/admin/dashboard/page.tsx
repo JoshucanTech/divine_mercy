@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Loader2 } from 'lucide-react'
+import { compressImage } from '@/lib/image-utils'
 
 interface Contestant {
   id: string
@@ -123,9 +124,17 @@ export default function AdminDashboard() {
     }
 
     const reader = new FileReader()
-    reader.onloadend = () => {
-      setEditFormData({ ...editFormData, image: reader.result as string })
-      toast.success('Image loaded successfully')
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result as string
+        const compressed = await compressImage(base64, 600, 600, 0.7)
+        setEditFormData({ ...editFormData, image: compressed })
+        toast.success('Image loaded and compressed successfully')
+      } catch (error) {
+        console.error('Compression error:', error)
+        setEditFormData({ ...editFormData, image: reader.result as string })
+        toast.error('Failed to compress image')
+      }
     }
     reader.readAsDataURL(file)
   }
