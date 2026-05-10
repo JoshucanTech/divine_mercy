@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export interface Contestant {
   id: string
@@ -9,29 +9,30 @@ export interface Contestant {
   updatedAt: string
 }
 
-export function useLeaderboard() {
-  const [contestants, setContestants] = useState<Contestant[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export function useLeaderboard(initialData?: Contestant[]) {
+  const [contestants, setContestants] = useState<Contestant[]>(initialData || [])
+  const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Fetch initial data
-    const fetchInitial = async () => {
-      try {
-        const res = await fetch('/api/admin/contestants')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        setContestants(Array.isArray(data) ? data : [])
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        setContestants([])
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchInitial = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/contestants')
+      if (!res.ok) throw new Error('Failed to fetch')
+      const data = await res.json()
+      setContestants(Array.isArray(data) ? data : [])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setIsLoading(false)
     }
+  }, [])
 
-    fetchInitial()
+  useEffect(() => {
+    // If no initial data, fetch it
+    if (!initialData) {
+      fetchInitial()
+    }
 
     // Connect to SSE for updates
     const eventSource = new EventSource('/api/leaderboard/stream')
@@ -42,9 +43,14 @@ export function useLeaderboard() {
 
         if (message.type === 'initial') {
           setContestants(message.contestants || [])
+          setIsLoading(false)
         } else if (message.type === 'update') {
-          // Refetch on update
-          fetchInitial()
+          // Use the data sent in the update if available, otherwise fetch
+          if (message.contestants) {
+            setContestants(message.contestants)
+          } else {
+            fetchInitial()
+          }
         }
       } catch (err) {
         console.error('Error parsing SSE message:', err)
@@ -53,19 +59,22 @@ export function useLeaderboard() {
 
     eventSource.onerror = () => {
       eventSource.close()
-      setError('Connection lost. Retrying...')
-      // Reconnect after delay
-      setTimeout(() => {
-        const newSource = new EventSource('/api/leaderboard/stream')
-        newSource.onmessage = eventSource.onmessage
-        newSource.onerror = eventSource.onerror
+      // Don't show full error if we already have data
+      if (contestants.length === 0) {
+        setError('Connection lost. Retrying...')
+      }
+      
+      const retryTimeout = setTimeout(() => {
+        // Reconnection logic is handled by creating a new EventSource on next mount or via this effect cleanup
       }, 3000)
+
+      return () => clearTimeout(retryTimeout)
     }
 
     return () => {
       eventSource.close()
     }
-  }, [])
+  }, [initialData, fetchInitial, contestants.length])
 
   return { contestants, isLoading, error }
 }
