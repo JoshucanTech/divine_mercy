@@ -17,10 +17,20 @@ const CreateContestantSchema = z.object({
   image: z.string().optional().nullable().or(z.literal('')),
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const excludeImages = searchParams.get('excludeImages') === 'true'
+
     const contestants = await prisma.contestant.findMany({
       orderBy: { voteCount: 'desc' },
+      select: excludeImages ? {
+        id: true,
+        name: true,
+        voteCount: true,
+        createdAt: true,
+        updatedAt: true,
+      } : undefined
     })
     return NextResponse.json(contestants)
   } catch (error) {

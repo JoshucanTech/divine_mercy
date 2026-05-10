@@ -45,9 +45,20 @@ export function useLeaderboard(initialData?: Contestant[]) {
           setContestants(message.contestants || [])
           setIsLoading(false)
         } else if (message.type === 'update') {
-          // Use the data sent in the update if available, otherwise fetch
+          // Merge partial updates (id, voteCount) into existing state to keep images
           if (message.contestants) {
-            setContestants(message.contestants)
+            setContestants(prev => {
+              const updates = message.contestants as { id: string, voteCount: number }[]
+              const updateMap = new Map(updates.map(u => [u.id, u.voteCount]))
+              
+              const updated = prev.map(c => ({
+                ...c,
+                voteCount: updateMap.get(c.id) ?? c.voteCount
+              }))
+
+              // Sort by voteCount descending
+              return [...updated].sort((a, b) => b.voteCount - a.voteCount)
+            })
           } else {
             fetchInitial()
           }
