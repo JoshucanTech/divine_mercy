@@ -9,7 +9,9 @@ const connectionString = process.env.DATABASE_URL
 const pool = new Pool({
   connectionString,
   ssl: connectionString?.includes('render.com') ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 5000, // 5 seconds timeout
+  max: 20, // Increased from default 10
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000, // Increased to 10 seconds
 })
 const adapter = new PrismaPg(pool)
 

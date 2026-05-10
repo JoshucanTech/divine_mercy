@@ -9,9 +9,9 @@ import { Trophy, Medal, Crown, Vote, TrendingUp } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
-export function Leaderboard() {
+export function Leaderboard({ initialContestants }: { initialContestants?: Contestant[] }) {
   const router = useRouter()
-  const { contestants, isLoading, error } = useLeaderboard()
+  const { contestants, isLoading, error } = useLeaderboard(initialContestants)
 
   if (isLoading) {
     return (
@@ -92,6 +92,7 @@ export function Leaderboard() {
                         src={contestant.image}
                         alt={contestant.name}
                         fill
+                        priority={rank <= 3}
                         className="object-cover transition-transform duration-1000 group-hover:scale-110"
                       />
                     ) : (
