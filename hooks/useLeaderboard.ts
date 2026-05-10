@@ -29,7 +29,14 @@ export function useLeaderboard(initialData?: Contestant[]) {
   }, [])
 
   useEffect(() => {
-    // If no initial data, fetch it
+    // If we have initial data but no images, fetch full data on client 
+    // to avoid the "FALLBACK_BODY_TOO_LARGE" error on Vercel
+    const hasImages = contestants.some(c => c.image)
+    if (initialData && !hasImages && contestants.length > 0) {
+      fetchInitial()
+    }
+
+    // If no initial data at all, fetch it
     if (!initialData) {
       fetchInitial()
     }
