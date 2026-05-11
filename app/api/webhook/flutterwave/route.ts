@@ -4,6 +4,15 @@ import { broadcastUpdate } from '../../leaderboard/stream/route'
 
 export async function POST(request: NextRequest) {
   try {
+    // Professional Security: Verify the webhook signature
+    const signature = request.headers.get('verif-hash')
+    const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH
+    
+    if (secretHash && signature !== secretHash) {
+      console.warn('Unauthorized webhook attempt blocked')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { event, data } = body
 
