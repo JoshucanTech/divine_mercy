@@ -32,7 +32,11 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       } : undefined
     })
-    return NextResponse.json(contestants)
+    return NextResponse.json(contestants, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=1, stale-while-revalidate=5'
+      }
+    })
   } catch (error) {
     console.error('Get contestants error:', error)
     return NextResponse.json(
