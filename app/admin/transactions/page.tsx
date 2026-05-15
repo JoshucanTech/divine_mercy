@@ -50,6 +50,7 @@ export default function AdminTransactions() {
   const { status } = useSession()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [total, setTotal] = useState(0)
+  const [globalStats, setGlobalStats] = useState({ revenue: 0, votes: 0, successCount: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,6 +82,7 @@ export default function AdminTransactions() {
         const data = await res.json()
         setTransactions(data.transactions)
         setTotal(data.total)
+        setGlobalStats(data.globalStats)
       }
     } catch (err) {
       setError('Failed to fetch transactions')
@@ -96,9 +98,27 @@ export default function AdminTransactions() {
   )
 
   const stats = [
-    { label: 'Total Revenue', value: `${transactions[0]?.currency || 'NGN'} ${transactions.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.amount, 0).toLocaleString()}`, icon: Receipt, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Votes Processed', value: transactions.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.voteCount, 0).toLocaleString(), icon: Vote, color: 'text-primary', bg: 'bg-primary/5' },
-    { label: 'Success Rate', value: total > 0 ? `${Math.round((transactions.filter(t => t.status === 'completed').length / (transactions.length || 1)) * 100)}%` : '0%', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { 
+      label: 'Total Revenue', 
+      value: `${transactions[0]?.currency || 'NGN'} ${globalStats.revenue.toLocaleString()}`, 
+      icon: Receipt, 
+      color: 'text-green-600', 
+      bg: 'bg-green-50' 
+    },
+    { 
+      label: 'Votes Processed', 
+      value: globalStats.votes.toLocaleString(), 
+      icon: Vote, 
+      color: 'text-primary', 
+      bg: 'bg-primary/5' 
+    },
+    { 
+      label: 'Success Rate', 
+      value: total > 0 ? `${Math.round((globalStats.successCount / (total || 1)) * 100)}%` : '0%', 
+      icon: TrendingUp, 
+      color: 'text-blue-600', 
+      bg: 'bg-blue-50' 
+    },
   ]
 
   const formatDate = (dateString: string) => {
